@@ -1,0 +1,131 @@
+(in-package :stumpwm)
+(run-shell-command "setxkbmap -layout us,it -option grp:win_space_toggle")
+(run-shell-command "stallman")
+(run-shell-command "feh --bg-center ~/Pictures/wallpapers/meta.jpg")
+(define-key *root-map* (kbd "e") "exec emacsclient --create-frame ~")
+(setf *ignore-wm-inc-hints* t)
+
+;; some keymaps and how to reach them
+;; terminal
+(define-key *top-map* (kbd "s-RET") "exec st -e zsh")
+;; key I'm never going to use, but might need if shit starts flying
+(define-key *top-map* (kbd "s-z") "eval")
+
+;; custom keymaps for /branching/
+;; this shit's screaming to be macro'd
+(defvar *muh-launchers-keymap*
+  (let ((m (make-sparse-keymap)))
+	(define-key m (kbd "d") "exec promptu")
+	(define-key m (kbd "r") "exec rofi -combi-modi drun,combi -show combi")
+	(define-key m (kbd "l") "exec")
+	(define-key m (kbd "e") "eval")
+	m))
+(define-key *root-map* (kbd "l") '*muh-launchers-keymap*)
+
+(defvar *muh-screenshot-keymap*
+  (let ((m (make-sparse-keymap)))
+	(define-key m (kbd "s") "exec scrot -s")
+	(define-key m (kbd "c") "exec screenclip")
+  m))
+(define-key *root-map* (kbd "s") '*muh-screenshot-keymap*)
+
+(gnew "EMACS")
+(gnewbg "WEB")
+(gnewbg "DOCS")
+(gnewbg "FILE")
+(gnewbg "DISEGNINI")
+
+;; vi vi vi, the editor of the beast
+(define-interactive-keymap move-vi
+						   nil
+						   ((kbd "h") "move-focus left")
+						   ((kbd "j") "move-focus down")
+						   ((kbd "k") "move-focus up")
+						   ((kbd "l") "move-focus right"))
+(define-key *top-map* (kbd "M-j") "move-vi")
+
+(define-interactive-keymap workspaces
+						   nil
+						   ((kbd "1") "gselect EMACS")
+						   ((kbd "2") "gselect WEB")
+						   ((kbd "3") "gselect DOCS")
+						   ((kbd "4") "gselect FILE")
+						   ((kbd "5") "gselect DISEGNINI")
+						   ((kbd "h") "gnext")
+						   ((kbd "l") "gprev"))
+(define-key *top-map* (kbd "M-l") "workspaces")
+
+;; this has to mimic emacs
+;; EVEN FURTHER BEYOND!!
+(define-key *root-map* (kbd "0") "remove")
+(define-key *root-map* (kbd "1") "remove-split")
+(define-key *root-map* (kbd "2") "vsplit")
+(define-key *root-map* (kbd "3") "hsplit")
+
+;; basic brightness volume et al bullshit
+(define-key *top-map* (kbd "XF86MonBrightnessUp") "exec light -A 0.5")
+(define-key *top-map* (kbd "XF86MonBrightnessDown") "exec light -U 0.5")
+(define-key *top-map* (kbd "XF86AudioRaiseVolume") "exec amixer set Master 5%+")
+(define-key *top-map* (kbd "XF86AudioLowerVolume") "exec amixer set Master 5%-")
+(define-key *top-map* (kbd "XF86AudioMute") "exec amixer -q set Master toggle")
+
+(define-key *root-map* (kbd "b") "mode-line")
+
+;;; slynk
+;;; I don't know how to lazy load, uncomment and reeval (loadrc) when fucking around live
+
+#|
+(ql:quickload :slynk)
+(let ((slynk-port 4005))
+  (defcommand slynk () ()
+			  (sb-thread:make-thread
+			   (lambda ()
+				 (slynk:create-server :port slynk-port :dont-close t)
+				 (echo-string
+				  (current-screen)
+				  "started slynk server, run M-x sly-connect and then (in-package :stumpwm) inside the sly repl"))
+			   :name "slynk-manual")))
+(define-key *root-map* (kbd "C-s") "slynk")
+|#
+
+;; qua va modularizzato qualcosina
+(defvar phundrak-nord0 "#2e3440")
+(defvar phundrak-nord1 "#3b4252")
+(defvar phundrak-nord2 "#434c5e")
+(defvar phundrak-nord3 "#4c566a")
+(defvar phundrak-nord4 "#d8dee9")
+(defvar phundrak-nord5 "#e5e9f0")
+(defvar phundrak-nord6 "#eceff4")
+(defvar phundrak-nord7 "#8fbcbb")
+(defvar phundrak-nord8 "#88c0d0")
+(defvar phundrak-nord9 "#81a1c1")
+(defvar phundrak-nord10 "#5e81ac")
+(defvar phundrak-nord11 "#bf616a")
+(defvar phundrak-nord12 "#d08770")
+(defvar phundrak-nord13 "#ebcb8b")
+(defvar phundrak-nord14 "#a3be8c")
+(defvar phundrak-nord15 "#b48ead")
+
+;; vedi come spiccicare la cosa malamente addosso a temi colori fottuti da terminali
+;; e poi fotti malamente colori da terminali
+;; tipo i dotfile di alacritty di ghostz(qualcosa)
+(setq *colors*
+      `(,phundrak-nord1   ;; 0 black
+        ,phundrak-nord11  ;; 1 red
+        ,phundrak-nord14  ;; 2 green
+        ,phundrak-nord13  ;; 3 yellow
+        ,phundrak-nord10  ;; 4 blue
+        ,phundrak-nord14  ;; 5 magenta
+        ,phundrak-nord8   ;; 6 cyan
+        ,phundrak-nord5)) ;; 7 white
+
+(when *initializing*
+  (update-color-map (current-screen)))
+
+(setf *mode-line-background-color* phundrak-nord1
+	  *mode-line-foreground-color* phundrak-nord5)
+
+(setf *mode-line-border-color* phundrak-nord1
+	  *mode-line-border-width* 0)
+
+(mode-line)
