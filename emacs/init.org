@@ -1,5 +1,5 @@
 #+title: Ita fac, mi Lucili
-#+property: header-args:emacs-lisp :tangle ../init.el
+#+property: header-args:emacs-lisp :tangle init.el
 
 * Pacchetti
 ** Manager
@@ -26,43 +26,62 @@ al momento non sono pienamente convertito a =use-package=
 operazioni da fare su tutti i pacchetti richiedono quindi codeste bestemmie
 #+begin_src emacs-lisp
   (setq muh-packages '(;; required by evil mode on newer emacsen
-					   undo-tree
-					   undo-fu
-					   goto-last-change
-					   ;; fundamental
-					   evil
-					   neotree
-					   ;; almost fundamental
-					   flycheck
-					   auto-complete
-					   ;; colours
-					   color-theme-modern
-					   dracula-theme
-					   solarized-theme
-					   color-theme-modern
-					   ef-themes
-					   ;; some other 9001 installed here and not listed
-					   ;; ides
-					   sly
-					   ;; geiser
-					   ;; geiser-racket
-					   ;; geiser-guile
-					   ess
-					   ediprolog
-					   auctex
-					   ;; language support
-					   sxhkdrc-mode ;(not supported in older emacsen)
-					   ;; utilities
-					   beacon
-					   ;; and this is where things get get stupid
-					   yasnippet
-					   yasnippet-snippets
-					   company
-					   olivetti
-					   all-the-icons
-					   treemacs
-					   ))
+		       undo-tree
+		       undo-fu
+		       goto-last-change
+		       ;; fundamental
+		       evil
+		       neotree
+		       ;; almost fundamental
+		       flycheck
+		       auto-complete
+		       ;; colours
+		       color-theme-modern
+		       dracula-theme
+		       solarized-theme
+		       color-theme-modern
+		       ef-themes
+		       ;; some other 9001 installed here and not listed
+		       ;; ides
+		       sly
+		       ;; geiser
+		       ;; geiser-racket
+		       ;; geiser-guile
+		       ess
+		       ediprolog
+		       auctex
+		       ;; language support
+		       sxhkdrc-mode ;(not supported in older emacsen)
+		       rust-mode
+		       toml-mode
+		       racket-mode
+		       ;; utilities
+		       beacon
+		       ;; and this is where things get get stupid
+		       yasnippet
+		       yasnippet-snippets
+		       company
+		       olivetti
+		       all-the-icons
+		       treemacs
+		       org-bullets
+		       ))
 #+end_src
+
+*** Pacchi convertiti a =use-package=
+(più che altro che è quanto ho trovato da github, quindi)
+ - =tree-sitter= et al, fottutto parzialmente malamente da [[https://github.com/rust-lang/rust-mode]]
+   #+begin_src emacs-lisp
+     (use-package tree-sitter-langs
+       :ensure t)
+
+     (use-package tree-sitter
+       :ensure t
+       :config
+       (require 'tree-sitter-langs)
+       (global-tree-sitter-mode)
+       (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
+   #+end_src
 
 ** Aggiornamenti
 per gestire/aggiornare/reinstallare pacchetti si definisce la seguente utility
@@ -74,7 +93,6 @@ per gestire/aggiornare/reinstallare pacchetti si definisce la seguente utility
   (dolist (pkg muh-packages)
 	(unless (package-installed-p pkg)
 	  (package-install pkg))))
-
 #+end_src
 
 ** Config specifiche di pacchi
@@ -139,13 +157,17 @@ yasnippet non c'ha molta roba da settare
 (yas-global-mode 1)
 #+end_src
 
-*** Altre cazzatine
+*** Altre cazzatine/pacchetti solo required
 #+begin_src emacs-lisp
-(require 'ess)
-(setq ac-use-quick-help nil)
+  (require 'ess)
+  (setq ac-use-quick-help nil)
 
-(require 'beacon)
-(beacon-mode 1)
+  (require 'beacon)
+  (beacon-mode 1)
+
+  (require 'rust-mode)
+  (require 'racket-mode)
+  (require 'sxhkdrc-mode)
 #+end_src
 
 * Per linguaggi/ scrittura
@@ -157,13 +179,13 @@ intanto
 (parte di queste configurazioni sono state rubate spudoratamete da [[https://zzamboni.org/post/beautifying-org-mode-in-emacs/][qui]])
 *** Per poter scrivere decentemente
 emacs ha questa mania per avere impostazioni default che fanno cagare il cazzo
-ai fini di raggiungere una mezza parità feautre con blocco note è quindi necessario specificare il seguente
+ai fini di raggiungere una mezza parità feautre con blocco note (et al) è quindi necessario specificare il seguente
 #+begin_src emacs-lisp
-(add-hook 'org-mode-hook (lambda ()
-						   (progn
-							 (visual-line-mode)
-							 (word-wrap-whitespace-mode)
-							 (org-bullets-mode))))
+  (add-hook 'org-mode-hook (lambda ()
+			     (progn
+			       ;; (word-wrap-whitespace-mode) ; for newer emacsen
+			       (visual-line-mode) ; for older emacsen
+			       (org-bullets-mode))))
 #+end_src
 *** Due cosine per l'export a latex
 #+begin_src emacs-lisp
@@ -197,6 +219,14 @@ org babel ha i suoi pacchetti che non sono richesti di default quando si usa org
      (lisp . t)
      (scheme . t)))
 #+end_src
+
+**** Per l'editing di listing di codice
+visto che spesso faccio un po' troppo window management da emacs, è un pochino una rottura fare =C-c '= da qualche parte per modificare del codice e poi org mi distrugge tutto
+quindi
+#+begin_src emacs-lisp
+  (setq org-src-window-setup 'current-window)
+#+end_src
+che è molto più comodo
 
 **** Per la valutazione dei listing
 funziona tutto abbastanza bene, ma quella di common lisp usa slime di default, visto che ho installato =sly= si specifica fare con =sly=
@@ -241,17 +271,22 @@ funzioni create al fine di
  - posso leggere gli html da emacs
  - il css è per deboli
 #+begin_src emacs-lisp
-(defun docsfag-rust()
+  (defun docsfag-rust()
+    (interactive)
+    (eww-open-file "~/docs/rust/book/book/index.html"))
+
+  ;; da riscaricare, che ho reinstallato il sistema
+  ;; probabile la funzione andrà rifatta per allora
+  (defun docsfag-sicp()
+    (interactive)				;
+    (eww-open-file "/home/diccu/Documents/lang/lisp/book/book.html"))
+#+end_src
+
+inoltre, visto che =eww= non formatta niente, e ho sempre tutto l'indice del rust book appena apro un link, vi presento l'arci nemesi di =rustup=
+#+begin_src emacs-lisp
+(defun rustdown()
   (interactive)
-  (eww-open-file "~/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/share/doc/rust/html/book/index.html"))
-
-(defun docsfag-cmake()
-  (interactive)				;
-  (eww-open-file "/home/diccu/Documents/lang/cmake/mastering-cmake/bild/html/index.html"))
-
-(defun docsfag-sicp()
-  (interactive)				;
-  (eww-open-file "/home/diccu/Documents/lang/lisp/book/book.html"))
+  (next-line 150))
 #+end_src
 ** Yasnippet
 questa chimera serve a scrivere pezzi di LaTeX più in fretta dando delle shorthand ed espandendole in snippet
@@ -335,16 +370,24 @@ per facilitare la cosa, visto che di default settare un tema non unsetta gli alt
 
 la versione =nonint= di =change-theme= è stata definita ai fini di poterla usare in modo "batch" all'interno di altre funzioni, due di queste sono per
 *** comandi per light e dark mode
-dati due temi
+dati i temi
 #+begin_src emacs-lisp
-  (setq muh-light-theme 'ef-trio-light)
-  (setq muh-dark-theme 'ef-trio-dark)
+(setq muh-light-theme 'ef-trio-light)
+(setq muh-dark-theme 'doom-opera)
+
+(setq muh-terminal-light-theme 'standard)
+(setq muh-terminal-dark-theme 'doom-opera)
 #+end_src
 
 si definiscono
 #+begin_src emacs-lisp
-  (defun going-light () (interactive) (change-theme-nonint muh-light-theme))
-  (defun going-dark () (interactive) (change-theme-nonint muh-dark-theme))
+(defun going-light () (interactive) (if (display-graphic-p)
+					(disable-all-themes)
+					(change-theme-nonint muh-terminal-light-theme)))
+
+(defun going-dark () (interactive) (if (display-graphic-p)
+					(change-theme-nonint muh-dark-theme)
+					(change-theme-nonint muh-terminal-dark-theme)))
 #+end_src
 
 ** Altre
@@ -362,7 +405,7 @@ copiata da [[https://stackoverflow.com/questions/13981899/how-can-i-kill-all-buf
 mi piace jetbrains mono
 ha un non so che di nostalgico per quando usavo ancora programmi che funzionavano e basta
 #+begin_src emacs-lisp
-(set-face-attribute 'default nil :family "JetBrains Mono" :height 130)
+(set-face-attribute 'default nil :family "MesloLGS NF" :height 130)
 #+end_src
 
 ci sarebbe inoltre questa cosa, che si fotte un po' quando cambio tema (grazie prot)
@@ -384,12 +427,7 @@ per evitare client side rendering, che con emacs fa cagare, vi è
 #+end_src
 altre variabili contro l'utilizzo di gui sono ritrovabili [[better][di sotto]]
 ** Colori
-si inizia settando il tema
-#+begin_src emacs-lisp
-  (going-dark)
-#+end_src
-
-oltre al tema "default" usato sono inoltre utilizzati anche i temi
+intanto si settano gli altri temi, questi presi dai repo come una persona normale
 #+begin_src emacs-lisp
   (use-package color-theme-sanityinc-tomorrow
     :ensure t)
@@ -401,14 +439,18 @@ oltre al tema "default" usato sono inoltre utilizzati anche i temi
           doom-zenburn-brighter-comments t
           doomt-themes-enable-italic t))
  #+end_src
-dai repository di emacs,
-e i temi
+
+e questi presi di violenza da github et al
 #+begin_src emacs-lisp
   (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/everforest-theme")
   (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/rose-pine-emacs")
   (add-to-list 'custom-theme-load-path "~/.emacs.d/themes")
 #+end_src
-presi alla cazzo da github
+
+e ora, settate tutte le possibili variabili del caso,
+#+begin_src emacs-lisp
+  (going-dark)
+#+end_src
 
 * Binding
 ** Evil leader
@@ -506,6 +548,8 @@ visto che sono un po' troppo abituato a dove si trovano i =:= americani per il p
   (setq tab-width 4)
   (setq scroll-conservatively most-positive-fixnum)
   (show-paren-mode t)
+  (put 'upcase-region 'disabled nil)
+  (put 'downcase-region 'disabled nil)
 #+end_src
 **** Quelle fottute da better defaults
 <<better>>
