@@ -6,46 +6,52 @@
 (package-initialize)
 
 (setq muh-packages '(;; required by evil mode on newer emacsen
-		     undo-tree
-		     undo-fu
-		     goto-last-change
-		     ;; fundamental
-		     evil
-		     neotree
-		     ;; almost fundamental
-		     flycheck
-		     auto-complete
-		     ;; colours
-		     color-theme-modern
-		     dracula-theme
-		     solarized-theme
-		     color-theme-modern
-		     ef-themes
-		     ;; some other 9001 installed here and not listed
-		     ;; ides
-		     sly
-		     ;; geiser
-		     ;; geiser-racket
-		     ;; geiser-guile
-		     ess
-		     ediprolog
-		     auctex
-		     ;; language support
-		     sxhkdrc-mode ;(not supported in older emacsen)
-		     rust-mode
-		     toml-mode
-		     racket-mode
-		     ;; utilities
-		     beacon
-		     ;; and this is where things get get stupid
-		     yasnippet
-		     yasnippet-snippets
-		     company
-		     olivetti
-		     all-the-icons
-		     treemacs
-		     org-bullets
-		     ))
+                     undo-tree
+                     undo-fu
+                     goto-last-change
+                     ;; fundamental
+                     evil
+                     neotree
+                     ;; almost fundamental
+                     flycheck
+                     auto-complete
+                     ;; colours
+                     color-theme-modern
+                     dracula-theme
+                     solarized-theme
+                     color-theme-modern
+                     ef-themes
+nord-theme
+nordless-theme
+northcode-theme
+nordic-night-theme
+noctilux-theme
+                     ;; some other 9001 installed here and not listed
+                     ;; ides
+                     sly
+                     ;; geiser
+                     ;; geiser-racket
+                     ;; geiser-guile
+                     ess
+                     ediprolog
+                     auctex
+                     ;; language support
+                     sxhkdrc-mode ;(not supported in older emacsen)
+                     rust-mode
+                     toml-mode
+                     racket-mode
+                     ;; utilities
+                     beacon
+                     ;; and this is where things get get stupid
+                     yasnippet
+                     yasnippet-snippets
+                     company
+                     olivetti
+                     all-the-icons
+                     treemacs
+                     org-bullets
+                     meow
+                     ))
 
 (use-package tree-sitter-langs
   :ensure t)
@@ -105,10 +111,15 @@
 
 (require 'org)
 
+(add-to-list 'load-path "~/.emacs.d/github") ;; la onde dove si scaricano brutalmente pacchetti
+(require 'org-pretty-table)
+
 (add-hook 'org-mode-hook (lambda ()
 			   (progn
 			     ;; (word-wrap-whitespace-mode) ; for newer emacsen
 			     (visual-line-mode) ; for older emacsen
+			     (org-pretty-table-mode)
+			     (org-indent-mode)
 			     (org-bullets-mode))))
 
 (add-to-list 'org-preview-latex-process-alist 'dvipng)
@@ -155,9 +166,20 @@
 
 (setq prolog-system 'swi)
 
+(defun kill-hide()
+  (interactive)
+  "nasconde la finestra corrente (tipo C-x 0  on 'delete-window'), uccidendo però anche il buffer associato, per non lasciarlo erroneamente a galla"
+  (let ((selwin (selected-window)))
+    (kill-buffer (window-buffer selwin))
+    (delete-window selwin)))
+
 (defun docsfag-rust()
   (interactive)
   (eww-open-file "~/docs/rust/book/book/index.html"))
+
+(defun docsfag-rust-example()
+  (interactive)
+  (eww-open-file "~/docs/rust/rust-by-example/book/index.html"))
 
 ;; da riscaricare, che ho reinstallato il sistema
 ;; probabile la funzione andrà rifatta per allora
@@ -168,6 +190,10 @@
 (defun rustdown()
   (interactive)
   (next-line 150))
+
+(defun rustdown-ex()
+  (interactive)
+  (next-line 300))
 
 (setq *snippet-shorthand-list*
       '((?b "\\mathbb" . 1)
@@ -205,20 +231,44 @@
           (setq index-in-snippet (1+ index-in-snippet)))))
     (concat acc "$0")))
 
-(defun disable-all-themes ()
-  (dolist (th custom-enabled-themes)
-    (disable-theme th)))
+;; TODO
+  ;; provide an api for add-theme-hook, remove-theme-hook, et al
+  ;; this would make for a good package
+  
+  (defvar theme-hooks-alist
+    '((doom-opera . ((lambda ()
+  		    (progn
+  		   (setq doom-opera-comment-bg t)
+  		   (set-face-foreground 'font-lock-comment-face "#bfbfbf")))))
+      (doom-zenburn . ((lambda ()
+  		      (progn
+  		      (setq doom-zenburn-comment-bg t)
+  		      (set-face-background 'show-paren-match "#7f8f9f")))))))
+  
+  (defun run-theme-hooks (theme)
+    (let ((hooks-cons (assoc theme theme-hooks-alist)))
+      (when hooks-cons
+        (dolist (hook (cdr hooks-cons))
+  	(funcall hook)))))
 
-(defun change-theme-nonint (themesym)
-  (disable-all-themes)
-  (load-theme themesym t))
+  (defun disable-all-themes ()
+    (dolist (th custom-enabled-themes)
+      (disable-theme th)))
 
-(defun change-theme ()
-  (interactive)
-  (let ((themestr (completing-read
-                   "Change to custom theme : "
-                   (mapcar #'symbol-name (custom-available-themes)))))
-    (change-theme-nonint (intern themestr))))
+  (defun change-theme-nonint (theme)
+  ;; TODO, undo dei hook già runnati
+  ;; la cosa potrebbe richiedere struct ad hoc,
+;; o il caricamemento e disabilitazione di "sottotemi" custom
+    (disable-all-themes)
+    (load-theme theme t)
+    (run-theme-hooks theme))
+
+  (defun change-theme ()
+    (interactive)
+    (let ((themestr (completing-read
+		     "Change to custom theme : "
+		     (mapcar #'symbol-name (custom-available-themes)))))
+      (change-theme-nonint (intern themestr))))
 
 (setq muh-light-theme 'ef-trio-light)
 (setq muh-dark-theme 'doom-opera)
@@ -228,18 +278,38 @@
 
 (defun going-light () (interactive) (if (display-graphic-p)
 					(disable-all-themes)
-					(change-theme-nonint muh-terminal-light-theme)))
+				      (change-theme-nonint muh-terminal-light-theme)))
 
 (defun going-dark () (interactive) (if (display-graphic-p)
-					(change-theme-nonint muh-dark-theme)
-					(change-theme-nonint muh-terminal-dark-theme)))
+				       (change-theme-nonint muh-dark-theme)
+				     (change-theme-nonint muh-terminal-dark-theme)))
+(defun back-to-insanity () (interactive) (disable-all-themes))
+
+(defun out-term ()
+  (interactive)
+  (start-process "terminal" nil "st" "-e" "zsh"))
+
+;; a volte non riesco a usare zsh, e la cosa è abbastanza comune da richiedere un
+(defun out-bash ()
+  (interactive)
+  (start-process "terminal" nil "st"))
+
+;; if you want to use mupdf, xreader, firefox... change this variable
+(defvar pdf-reading-program "zathura")
+;; vedi se fare C-u m M-x outer-pdf magari puoi impostarlo col prefisso
+;; per girare con mupdf invece di zathura, se andasse di cambiare ogni tanto
+(defun out-pdf ()
+  (interactive)
+  (let ((file (expand-file-name
+               (car (find-file-read-args "pdf: " t))))) ; car, questa funzione è strana
+    (start-process "reader" nil pdf-reading-program file)))
 
 (defun nuke-all-buffers ()
   (interactive)
   (mapc 'kill-buffer (buffer-list))
   (delete-other-windows))
 
-(set-face-attribute 'default nil :family "MesloLGS NF" :height 130)
+(set-face-attribute 'default nil :family "Jetbrains Mono" :height 130)
 
 (defun org-like-em-big ()
   (interactive)
@@ -320,6 +390,13 @@
 
 (evil-define-key 'normal 'global "ç" 'evil-ex)
 
+(global-set-key (kbd "C-c C-x C-k") 'kill-hide)
+
+(global-set-key (kbd "C-c m")
+		(lambda (s)
+		  (interactive "sShorthand: ")
+		  (yas-expand-snippet (create-snippet-from-shorthand s))))
+
 (setq make-backup-files nil)
 (setq auto-save-default nil)
 (setq ring-bell-function 'ignore)
@@ -341,5 +418,24 @@
 (setq c-basic-offset 4)
 (setq python-indent-offset 4)
 
-(setq read-process-output-max (* 1024 1024))
-(setq gc-cons-threshold 102400000)
+(setq read-process-output-max (* 1024 1024)
+      gc-cons-threshold 102400000
+      gc-cons-threshold 102400000)
+
+(setq lsp-enable-indentation nil)
+
+(add-hook 'prog-mode-hook 'rainbow-delimiters-mode) ; boh
+(add-hook 'prog-mode-hook 'hs-minor-mode) ; potrebbe far partire tutto, occhio
+(custom-set-variables
+ ;; custom-set-variables was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ '(package-selected-packages
+   '(company-c-headers lsp-pyright lsp-python-ms yuck-mode yasnippet-snippets use-package undo-tree undo-fu treemacs tree-sitter-langs toml-mode sxhkdrc-mode solarized-theme sly rust-mode rainbow-delimiters racket-mode orthodox-christian-new-calendar-holidays org-table-color org-bullets olivetti nordless-theme nordic-night-theme nord-theme nodejs-repl neotree meow lua-mode lsp-mode js2-mode iscroll goto-last-change flycheck evil ess eglot ef-themes ediprolog dracula-theme doom-themes company color-theme-sanityinc-tomorrow color-theme-modern beacon auto-complete auctex all-the-icons)))
+(custom-set-faces
+ ;; custom-set-faces was added by Custom.
+ ;; If you edit it by hand, you could mess it up, so be careful.
+ ;; Your init file should contain only one such instance.
+ ;; If there is more than one, they won't work right.
+ )
