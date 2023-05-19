@@ -159,8 +159,12 @@ local function pick_random_wallpaper()
     local potential_wallpaper_subpaths= {
         "Akira/kaneda-bike-resized.jpg",
         "Akira/kaneda-chair.jpg",
-        "Berserk/luna.jpg"
+        "Berserk/luna.jpg",
     }
+    -- nella lista non metto ignuzio
+    -- così la funzione e/o shortcut può anche servire ad andare subito a uno sfondo
+    -- meno difficile da spiegare, se passa /qualcuno/
+    
     -- ma sti matematici non lo sanno fare un linguaggio con gli indici da 0?
     local rand_ind = math.random(1,#potential_wallpaper_subpaths)
     return wallpaper_dir .. potential_wallpaper_subpaths[rand_ind]
@@ -171,17 +175,7 @@ local function set_random_wallpaper(s)
 end
 
 local function set_wallpaper(s)
-    -- Wallpaper
-    -- if beautiful.wallpaper then
-    --     local wallpaper = beautiful.wallpaper
-    --     -- If wallpaper is a function, call it with the screen
-    --     if type(wallpaper) == "function" then
-    --         wallpaper = wallpaper(s)
-    --     end
-    --     gears.wallpaper.maximized(wallpaper, s, true)
-    -- end
-    -- set_random_wallpaper(s)
-    local one_true_wallpaper = "/home/big/Pictures/Sfondi/Berserk/luna.jpg"
+    local one_true_wallpaper = "/home/big/Pictures/Sfondi/ignucius.jpg"
     gears.wallpaper.maximized(one_true_wallpaper, s)
 end
 
@@ -336,6 +330,8 @@ globalkeys = gears.table.join(
     -- Prompt
     awful.key({ "Mod1" },            "d",     function () awful.screen.focused().mypromptbox:run() end,
               {description = "run prompt", group = "launcher"}),
+    awful.key({ "Mod1", "Shift" },            "d",     function () awful.spawn("promptu") end,
+              {description = "promptu", group = "launcher"}),
 
     awful.key({ modkey }, "x",
               function ()
@@ -358,7 +354,13 @@ globalkeys = gears.table.join(
     awful.key({}, "XF86MonBrightnessUp", function() awful.spawn("light -A 0.5") end,
               {description = "brightness up", group = "brightness"}),
     awful.key({}, "XF86MonBrightnessDown", function() awful.spawn("light -U 0.5") end,
+              {description = "brightness down", group = "brightness"}),
+
+    awful.key({"Control", "Mod1", "Mod4" }, "k", function() awful.spawn("light -A 0.5") end,
+              {description = "brightness up", group = "brightness"}),
+    awful.key({"Control", "Mod1", "Mod4" }, "j", function() awful.spawn("light -U 0.5") end,
               {description = "brighteness down", group = "brightness"}),
+
     -- Volume
     awful.key({}, "XF86AudioRaiseVolume", function() awful.spawn("amixer set Master 5%+") end,
               {description = "raise volume", group = "volume"}),
