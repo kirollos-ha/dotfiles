@@ -5,17 +5,13 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-source ~/powerlevel10k/powerlevel10k.zsh-theme
+source ~/git/powerlevel10k/powerlevel10k.zsh-theme
+alias nano='emacsclient -nw'
+alias findmacs='ps -e | grep emacs'
+
+path+=('/home/big/.local/bin')
+path+=('/home/big/.cargo/bin')
+path+=('/home/big/.roswell/bin')
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
-
-alias stallman='emacs --daemon &'
-alias stalfos='killall emacs'
-alias findmacs='pidof emacs'
-alias nano='emacsclient -nw'
-
-PLAN9="/home/diccu/.local/plan9"
-PATH="$PATH:$PLAN9:$PLAN9/bin"
-export PLAN9
-export PATH

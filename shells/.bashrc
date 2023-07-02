@@ -28,40 +28,47 @@ set -o vi
 export EDITOR='/usr/bin/vim'
 export VISUAL='/usr/bin/vim'
 export XDG_CONFIG_HOME="$HOME/.config"
-# export LSP_USE_PLISTS=true
 
-alias ohno='flatpak run org.eclipse.Java'
 alias ls='ls --color'
 alias findmacs='ps -e | grep emacs'
 
-
 alias nano='emacsclient -nw'
 
-alias quello='cmake -S . -B build'
-alias quella='cd build; make'
-
-alias nvim-sync="nvim --headless -c 'autocmd User PackerComplete quitall' -c 'PackerSync'"
+alias diocane='cowsay \"diocane\"'
 
 PLAN9="/home/diccu/.local/plan9"
 export PLAN9
 PATH="$PATH:$PLAN9:$PLAN9/bin"
-export PATH
 
-unset rc
 . "$HOME/.cargo/env"
+PATH="$PATH:$Home/.cargo/bin"
+PATH="$PATH:$HOME/.roswell/bin"
 
-# >>> conda initialize >>>
-# !! Contents within this block are managed by 'conda init' !!
+export PATH
+unset rc
+
+export XDG_CONFIG_DIRS="$XDG_CONFIG_DIRS:$HOME/.config"
+
+# # >>> conda initialize >>>
+# # !! Contents within this block are managed by 'conda init' !!
 # __conda_setup="$('/usr/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
 # if [ $? -eq 0 ]; then
-#     eval "$__conda_setup"
+    # eval "$__conda_setup"
 # else
-#     if [ -f "/usr/etc/profile.d/conda.sh" ]; then
-#         . "/usr/etc/profile.d/conda.sh"
-#     else
-#         export PATH="/usr/bin:$PATH"
-#     fi
+    # if [ -f "/usr/etc/profile.d/conda.sh" ]; then
+        # . "/usr/etc/profile.d/conda.sh"
+    # else
+        # export PATH="/usr/bin:$PATH"
+    # fi
 # fi
 # unset __conda_setup
 # # <<< conda initialize <<<
+# # 
+# 
+# Automatically added by the Gui  install script.
+if [ -n "$GUIX_ENVIRONMENT" ]; then
+     if [[ $PS1 =~ (.*)"\\$" ]]; then
+         PS1="${BASH_REMATCH[1]} [env]\\\$ "
+     fi
+fi
 # 

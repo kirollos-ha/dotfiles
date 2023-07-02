@@ -5,8 +5,8 @@
  *
  * font: see http://freedesktop.org/software/fontconfig/fontconfig-user.html
  */
-static char *font = "MesloLGS NF:pixelsize=16:antialias=true:autohint=true";
-static int borderpx = 2;
+static char *font = "MesloLGS NF:pixelsize=18:antialias=true:autohint=true";
+static int borderpx = 0;
 
 /*
  * What program is execed by st depends of these precedence rules:
@@ -99,34 +99,33 @@ unsigned int tabspaces = 8;
 
 static const char *colorname[] = {
     /* 8 normal colors */
-    "#414868",
-    "#f7768e",
-    "#9ece6a",
-    "#e0af68",
-    "#7aa2f7",
-    "#bb9af7",
-    "#7dcfff",
-    "#787c99",
+    "#3b4252",
+    "#bf616a",
+    "#a3be8c",
+    "#ebcb8b",
+    "#81a1c1",
+    "#b48ead",
+    "#88c0d0",
+    "#e5e9f0",
 
     /* 8 bright colors */
-    "#414868",
-    "#f7768e",
-    "#9ece6a",
-    "#e0af68",
-    "#7aa2f7",
-    "#bb9af7",
-    "#7dcfff",
-    "#c0caf5",
+    "#4c566a",
+    "#bf616a",
+    "#a3be8c",
+    "#ebcb8b",
+    "#81a1c1",
+    "#b48ead",
+    "#8fbcbb",
+    "#eceff4",
 
     [255] = 0,
 
     /* more colors can be added after 255 to use with DefaultXX */
     "#cccccc",
     "#555555",
-    "#c0caf5", /* default foreground colour */
-    "#1a1b26", /* default background colour */
-;
-
+    "#d8dee9", /* default foreground colour */
+    "#2e3440", /* default background colour */
+};
 
 
 /*
