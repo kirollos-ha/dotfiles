@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: mathmode
+# key: mm
+# --
+\\($1\\) $0

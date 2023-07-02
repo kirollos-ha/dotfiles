@@ -1,0 +1,706 @@
+#+title: Ita fac, mi Lucili
+#+property: header-args:emacs-lisp :tangle init.el
+
+* Pacchetti
+** Manager
+il normalissimo =package.el= funziona abbastanza bene per adesso
+
+#+begin_src emacs-lisp
+(require 'package)
+#+end_src
+
+*** =package-archives=
+=nongnu= aggiunto per package quali =geiser= che non sono su =melpa=
+#+begin_src emacs-lisp
+(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/"))
+(add-to-list 'package-archives '("nongnu" . "https://elpa.nongnu.org/nongnu/"))
+#+end_src
+
+*** Inizio
+#+Begin_src emacs-lisp
+  (package-initialize)
+#+end_src
+
+** Lista Pacchi
+al momento non sono pienamente convertito a =use-package=
+operazioni da fare su tutti i pacchetti richiedono quindi codeste bestemmie
+#+begin_src emacs-lisp
+  (setq muh-packages '(;; required by evil mode on newer emacsen
+                       undo-tree
+                       undo-fu
+                       goto-last-change
+                       ;; fundamental
+                       evil
+                       neotree
+                       ;; almost fundamental
+                       flycheck
+                       auto-complete
+                       ;; colours
+                       color-theme-modern
+                       dracula-theme
+                       solarized-theme
+                       color-theme-modern
+                       ef-themes
+  nord-theme
+  nordless-theme
+  northcode-theme
+  nordic-night-theme
+  noctilux-theme
+                       ;; some other 9001 installed here and not listed
+                       ;; ides
+                       sly
+                       ;; geiser
+                       ;; geiser-racket
+                       ;; geiser-guile
+                       ess
+                       ediprolog
+                       auctex
+                       ;; language support
+                       sxhkdrc-mode ;(not supported in older emacsen)
+                       rust-mode
+                       toml-mode
+                       racket-mode
+                       ;; utilities
+                       beacon
+                       ;; and this is where things get get stupid
+                       yasnippet
+                       yasnippet-snippets
+                       company
+                       olivetti
+                       all-the-icons
+                       treemacs
+                       org-bullets
+                       meow
+                       ))
+#+end_src
+
+*** Pacchi convertiti a =use-package=
+(più che altro che è quanto ho trovato da github, quindi)
+ - =tree-sitter= et al, fottutto parzialmente malamente da [[https://github.com/rust-lang/rust-mode]]
+   #+begin_src emacs-lisp
+     (use-package tree-sitter-langs
+       :ensure t)
+
+     (use-package tree-sitter
+       :ensure t
+       :config
+       (require 'tree-sitter-langs)
+       (global-tree-sitter-mode)
+       (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
+   #+end_src
+
+** Aggiornamenti
+per gestire/aggiornare/reinstallare pacchetti si definisce la seguente utility
+#+begin_src emacs-lisp
+(defun potential-reinstall ()
+  "look at all the packages again, installing whatever is in the list you didn't install"
+  (interactive)
+  (package-refresh-contents)
+  (dolist (pkg muh-packages)
+	(unless (package-installed-p pkg)
+	  (package-install pkg))))
+#+end_src
+
+** Config specifiche di pacchi
+(questa è la parte che mi s'inculerà poi con use package)
+*** Quelli base
+**** Evil mode
+l'unica cosa da considerare veramente qui è il =evil-disable-insert-state-bindings=
+settarlo a =t= vuol dire che la insert mode non fa override di shortcut per il muovimento, permettendo di usare quelle default di emacs in inser mode, e quelle di vim in normal mode
+
+da settare prima di fare il =require=, per qualche motivo, ipse dixit i doc
+#+begin_src emacs-lisp
+(setq evil-disable-insert-state-bindings t)
+(require 'evil)
+(setq evil-esc-delay 0.0)
+(evil-mode 1)
+(evil-normal-state)
+#+end_src
+
+**** Neotree
+neotree esiste, non fa molto altro
+non so manco che fa =neotree-smart-open=, ma sembra comodo
+#+begin_src emacs-lisp
+(require 'neotree)
+(setq neotree-smart-open t)
+#+end_src
+
+*** Autocompletamento
+**** Per il language server
+***** sp Mode
+
+vedi [[lspvars]] per variabili globali di emacs settate per far funzionare +sta merda+
+***** Eglot
+eglot è bellino quando capisce subito che server usare e non devi configurare un cazzo, notare il *quando*
+#+begin_src emacs-lisp
+(with-eval-after-load 'eglot
+  (progn
+    (add-to-list 'eglot-server-programs
+		 '(racket-mode . ("racket" "-l" "racket-langserver")))
+    (add-to-list 'eglot-server-programs
+		 '(js-mode . ("npx" "typescript-language-server" "--stdio")))))
+#+end_src
+**** Per l'interfaccia bellina
+***** Company
+company viene settata globalmente, il =company-minimum-prefix= messo basso serve per qando non so cosa fare e uso l'autocompleta come documentazione del linguaggio
+#+begin_src emacs-lisp
+(require 'company)
+(add-hook 'after-init-hook  'global-company-mode)
+(setq company-miminum-prefix-length 3)
+#+end_src
+****** Rebinding
+visto che avere =RET= per l'autocompeltamento a volte rompe i coglioni, (e lode a [[https://emacs.stackexchange.com/questions/13286/][stack overflow]])
+#+begin_src emacs-lisp
+(with-eval-after-load 'company
+  (define-key company-active-map (kbd "<return>") nil)
+  (define-key company-active-map (kbd "RET") nil)
+  (define-key company-active-map (kbd "<tab>") 'company-complete-selection))
+#+end_src
+
+*** Yasnippet
+yasnippet non c'ha molta roba da settare
+#+begin_src emacs-lisp
+(require 'yasnippet)
+(yas-global-mode 1)
+#+end_src
+
+*** Altre cazzatine/pacchetti solo required
+#+begin_src emacs-lisp
+  (require 'ess)
+  (setq ac-use-quick-help nil)
+
+  (require 'beacon)
+  (beacon-mode 1)
+
+  (require 'rust-mode)
+  (require 'racket-mode)
+  (require 'sxhkdrc-mode)
+#+end_src
+
+* Per linguaggi/ scrittura
+** Org mode
+*** Require per org mode
+intanto l'ovvio
+#+begin_src emacs-lisp
+  (require 'org)
+#+end_src
+inoltre, per quando (ab)uso tabelle, anche
+#+begin_src emacs-lisp
+  (add-to-list 'load-path "~/.emacs.d/github") ;; la onde dove si scaricano brutalmente pacchetti
+  (require 'org-pretty-table)
+#+end_src
+(parte di queste configurazioni sono state rubate spudoratamete da [[https://zzamboni.org/post/beautifying-org-mode-in-emacs/][qui]])
+*** Per poter scrivere decentemente
+emacs ha questa mania per avere impostazioni default che fanno cagare il cazzo
+ai fini di raggiungere una mezza parità feautre con blocco note (et al) è quindi necessario specificare il seguente
+#+begin_src emacs-lisp
+  (add-hook 'org-mode-hook (lambda ()
+			     (progn
+			       ;; (word-wrap-whitespace-mode) ; for newer emacsen
+			       (visual-line-mode) ; for older emacsen
+			       (org-pretty-table-mode)
+			       (org-indent-mode)
+			       (org-bullets-mode))))
+#+end_src
+*** Due cosine per l'export a latex
+#+begin_src emacs-lisp
+(add-to-list 'org-preview-latex-process-alist 'dvipng)
+#+end_src
+*** Babel
+**** Require
+org babel ha i suoi pacchetti che non sono richesti di default quando si usa org
+#+begin_src emacs-lisp
+(require 'org-tempo)
+(require 'ob-python)
+(require 'ob-lisp)
+(require 'ob-scheme)
+#+end_src
+
+**** Per i listing di codice
+è inoltre abbastanza importante specificare in che mode sono
+(parzialmente rubato da [[https://plantuml.com/emacs][qui]])
+#+begin_src emacs-lisp
+  (setq org-plantuml-jar-path (expand-file-name "/home/diccu/uml/plantuml.jar")) 
+  (add-to-list 'org-src-lang-modes '("plantuml" . plantuml))
+  (add-to-list 'org-src-lang-modes '("lisp" . lisp))
+  (add-to-list 'org-src-lang-modes '("python" . python))
+  (add-to-list 'org-src-lang-modes '("scheme" . scheme))
+
+  (org-babel-do-load-languages
+   'org-babel-load-languages
+   '((emacs-lisp . t)
+     (plantuml . t)
+     (python . t)
+     (lisp . t)
+     (scheme . t)))
+#+end_src
+
+**** Per l'editing di listing di codice
+visto che spesso faccio un po' troppo window management da emacs, è un pochino una rottura fare =C-c '= da qualche parte per modificare del codice e poi org mi distrugge tutto
+quindi
+#+begin_src emacs-lisp
+  (setq org-src-window-setup 'current-window)
+#+end_src
+che è molto più comodo
+
+**** Per la valutazione dei listing
+funziona tutto abbastanza bene, ma quella di common lisp usa slime di default, visto che ho installato =sly= si specifica fare con =sly=
+#+begin_src emacs-lisp
+(setq org-babel-lisp-eval-fn 'sly-eval)
+#+end_src
+
+*** Scelte stilistiche
+
+** LaTeX
+commenterei sta parte ma l'ho copiata da verbatim da https://www.emacswiki.org/emacs/AUCTeX
+#+begin_src emacs-lisp
+  (setq TeX-auto-save t)
+  (setq TeX-parse-self t)
+  (setq-default TeX-master nil)
+
+  (add-hook 'LaTeX-mode-hook 'visual-line-mode)
+  ;; quando capisco come funziona per non anglofoni
+  ;;(add-hook 'LaTeX-mode-hook 'flyspell-mode) 
+  (add-hook 'LaTeX-mode-hook 'LaTeX-math-mode)
+
+  (add-hook 'LaTeX-mode-hook 'turn-on-reftex)
+  (setq reftex-plug-into-AUCTeX t)
+#+end_src
+*** Traumi con windows
+#+begin_src emacs-lisp
+  (modify-coding-system-alist 'file "\\.tex\\'" 'utf-8)
+  #+end_src
+
+** Altro
+#+begin_src emacs-lisp
+  (setq inferior-lisp-program "sbcl")
+  (setq scheme-program-name "guile3.0") ;; per racket c'è racket mode
+
+  (setq prolog-system 'swi)
+#+end_src
+
+* Funzioni custom
+** Buffering
+visto che molti buffer finiscono con l'essere "monouso", risulta dispendioso tenerseli costantemente dietro costantemente o doverli uccidere manualmente ogni volta
+#+begin_src emacs-lisp
+  (defun kill-hide()
+    (interactive)
+    "nasconde la finestra corrente (tipo C-x 0  on 'delete-window'), uccidendo però anche il buffer associato, per non lasciarlo erroneamente a galla"
+    (let ((selwin (selected-window)))
+      (kill-buffer (window-buffer selwin))
+      (delete-window selwin)))
+#+end_src
+** Docsfag
+funzioni create al fine di
+ - posso scaricare i doc in html
+ - posso leggere gli html da emacs
+ - il css è per deboli
+#+begin_src emacs-lisp
+  (defun docsfag-rust()
+    (interactive)
+    (eww-open-file "~/docs/rust/book/book/index.html"))
+
+  (defun docsfag-rust-example()
+    (interactive)
+    (eww-open-file "~/docs/rust/rust-by-example/book/index.html"))
+
+  ;; da riscaricare, che ho reinstallato il sistema
+  ;; probabile la funzione andrà rifatta per allora
+  (defun docsfag-sicp()
+    (interactive)				;
+    (eww-open-file "/home/diccu/Documents/lang/lisp/book/book.html"))
+#+end_src
+
+inoltre, visto che =eww= non formatta niente, e ho sempre tutto l'indice del rust book appena apro un link, vi presento l'arci nemesi di =rustup=
+#+begin_src emacs-lisp
+  (defun rustdown()
+    (interactive)
+    (next-line 150))
+
+  (defun rustdown-ex()
+    (interactive)
+    (next-line 300))
+#+end_src
+** Yasnippet
+questa chimera serve a scrivere pezzi di LaTeX più in fretta dando delle shorthand ed espandendole in snippet
+avrei potuto farlo dichiarando tutti i suddetti snippet, ci ho provato e più o meno funziona, ma questo permette una flessibilità (e abuso) molto maggiore, in quanto gli snippet vengono generati a runtime prima di essere espansi
+
+il funzionamento della chimera segue il seguente processo
+- si hanno dei caratteri, ogni carattere è associato a un simbolo latex e a un arg count
+- si da la lista di caratteri
+- ogni carattere dato viene espanso in un sottosnippet con quel simbolo e quel tot di argomenti
+- i sottosnippet sono messi tutti insieme e dati in pasto a =yas-expand-snippet=
+
+qualora si disponga di un set di questi sottosnippet si potrebbe allora
+ - prenderne uno dato il carattere associato
+ - prenderne il simbolo
+ - prenderne l'arg count
+
+si supponga come set di snippet il seguente
+#+begin_src emacs-lisp
+  (setq *snippet-shorthand-list*
+        '((?b "\\mathbb" . 1)
+          (?c "\\mathcal" . 1)
+          (?f "\\frac" . 2)
+          (?s "\\sum" . 0)
+          (?l "\\lim" . 0)
+          (?i "\\int" . 0)
+          (?d "_" . 1)    ;down
+          (?u "^" . 1)))  ;up
+#+end_src
+
+allora per fare le funzioni sopra dette basterebbe
+#+begin_src emacs-lisp
+  (defun subsnippet-from-char (c) (assoc c *snippet-shorthand-list*))
+  (defun subsnippet-symbol (s) (cadr s))
+  (defun subsnippet-arg-count (s) (cddr s))
+#+end_src
+
+per l'espansione di shorthand si usa la seguente funzione
+#+begin_src emacs-lisp
+  (defun create-snippet-from-shorthand (short)
+    "the short arg is a shorthand for a snippet, retuns a yasnippet snippet created from the shorthand"
+    ;; input cleanup
+    (setq short (string-clean-whitespace short))
+    ;; now expand every char of the shorthand
+    ;; some initial setting
+    (let ((s-len (length short))
+          (acc "")
+          (index-in-snippet 1))
+      ;; then iterate every char of the shorthand
+      ;; appending the expansion to an accumulator
+      (dotimes (i s-len)
+        (let* ((c (aref short i))
+               (ss (subsnippet-from-char c))
+               (s-sym (subsnippet-symbol ss))
+               (s-argc (subsnippet-arg-count ss)))
+          (setq acc (concat acc s-sym))
+          (dotimes (x s-argc)
+            (setq acc (concat acc "{$" (number-to-string index-in-snippet) "}"))
+            (setq index-in-snippet (1+ index-in-snippet)))))
+      (concat acc "$0")))
+#+end_src
+
+** Per colori
+cuasa indecisione cronica cambio temi di colore almeno 3 volte a seduta
+per facilitare la cosa, visto che di default settare un tema non unsetta gli altri, l'ho dovuto fare io
+#+begin_src emacs-lisp :noweb yes
+    <<define-theme-hooks>>
+
+    (defun disable-all-themes ()
+      (dolist (th custom-enabled-themes)
+	(disable-theme th)))
+
+    (defun change-theme-nonint (theme)
+    ;; TODO, undo dei hook già runnati
+    ;; la cosa potrebbe richiedere struct ad hoc,
+  ;; o il caricamemento e disabilitazione di "sottotemi" custom
+      (disable-all-themes)
+      (load-theme theme t)
+      <<run-theme-hooks>>)
+
+    (defun change-theme ()
+      (interactive)
+      (let ((themestr (completing-read
+		       "Change to custom theme : "
+		       (mapcar #'symbol-name (custom-available-themes)))))
+	(change-theme-nonint (intern themestr))))
+#+end_src
+
+la versione =nonint= di =change-theme= è stata definita ai fini di poterla usare in modo "batch" all'interno di altre funzioni, due di queste sono per
+
+*** Theme hooks
+per molte theme di quelle che uso ci sono attributi che vorrei poter modificare
+purtroppo non esiste un =change-theme-hook=, e le modifiche desiderate variano da theme a theme
+visto che tanto ho già wrappato tutte le manipolazioni di theme, tanto vale aggiungere delle funzionalità per hook specifiche a certe theme
+#+begin_src emacs-lisp :noweb-ref define-theme-hooks :tangle no
+  ;; TODO
+  ;; provide an api for add-theme-hook, remove-theme-hook, et al
+  ;; this would make for a good package
+
+  (defvar theme-hooks-alist
+    '((doom-opera . ((lambda ()
+		      (progn
+		     (setq doom-opera-comment-bg t)
+		     (set-face-foreground 'font-lock-comment-face "#bfbfbf")))))
+      (doom-zenburn . ((lambda ()
+			(progn
+			(setq doom-zenburn-comment-bg t)
+			(set-face-background 'show-paren-match "#7f8f9f")))))))
+
+  (defun run-theme-hooks (theme)
+    (let ((hooks-cons (assoc theme theme-hooks-alist)))
+      (when hooks-cons
+	(dolist (hook (cdr hooks-cons))
+	  (funcall hook)))))
+#+end_src
+
+per girare i hook di tema basterà quindi fare
+#+begin_src emacs-lisp :noweb-ref run-theme-hooks :tangle no
+  (run-theme-hooks theme)
+#+end_src
+*** comandi per light e dark mode
+
+dati i temi
+#+begin_src emacs-lisp
+(setq muh-light-theme 'ef-trio-light)
+(setq muh-dark-theme 'doom-opera)
+
+(setq muh-terminal-light-theme 'standard)
+(setq muh-terminal-dark-theme 'doom-opera)
+#+end_src
+
+si definiscono
+#+begin_src emacs-lisp
+  (defun going-light () (interactive) (if (display-graphic-p)
+					  (disable-all-themes)
+					(change-theme-nonint muh-terminal-light-theme)))
+
+  (defun going-dark () (interactive) (if (display-graphic-p)
+					 (change-theme-nonint muh-dark-theme)
+				       (change-theme-nonint muh-terminal-dark-theme)))
+  (defun back-to-insanity () (interactive) (disable-all-themes))
+#+end_src
+
+** Processi esterni
+vi sono molti processi esterni il cui utilizzo è correlato all'utilizzo di emacs
+questo può comprendere terminali o lettori documenti, qualora le facility builtin di emacs non bastino a certi scopi (proposizione, lo so, assai blasfema)
+
+per gestire questi programmi senza il rumore solitamente dato dalla creazione di buffer popup, e anche ai fini di controllare meglio il modo in cui voglio utilizzarli, sono qui date varie funzioni interattive per lo mi sbattimento
+#+begin_src emacs-lisp
+  (defun out-term ()
+    (interactive)
+    (start-process "terminal" nil "st" "-e" "zsh"))
+
+  ;; a volte non riesco a usare zsh, e la cosa è abbastanza comune da richiedere un
+  (defun out-bash ()
+    (interactive)
+    (start-process "terminal" nil "st"))
+
+  ;; if you want to use mupdf, xreader, firefox... change this variable
+  (defvar pdf-reading-program "zathura")
+  ;; vedi se fare C-u m M-x outer-pdf magari puoi impostarlo col prefisso
+  ;; per girare con mupdf invece di zathura, se andasse di cambiare ogni tanto
+  (defun out-pdf ()
+    (interactive)
+    (let ((file (expand-file-name
+                 (car (find-file-read-args "pdf: " t))))) ; car, questa funzione è strana
+      (start-process "reader" nil pdf-reading-program file)))
+#+end_src
+** Misc.
+*** =nuke-all-buffers=
+copiata da [[https://stackoverflow.com/questions/13981899/how-can-i-kill-all-buffers-in-my-emacs][stack overflow]] come soluzione nucleare a cazzatine da daemon
+#+begin_src emacs-lisp
+  (defun nuke-all-buffers ()
+    (interactive)
+    (mapc 'kill-buffer (buffer-list))
+    (delete-other-windows))
+#+end_src
+
+* Temi e colori
+** Font
+mi piace jetbrains mono
+ha un non so che di nostalgico per quando usavo ancora programmi che funzionavano e basta
+font/font family di riserva/di rotazione
+ - =MesloLGS NF= si abbina ai terminali (pl10k)
+ - =Dejavu Sans Mono= classico
+ - =Liberation Mono= che siamo a tema
+ - =Inconsolata= che siamo a tema
+#+begin_src emacs-lisp
+(set-face-attribute 'default nil :family "Liberation Mono" :height 130)
+#+end_src
+
+ci sarebbe inoltre questa cosa, che si fotte un po' quando cambio tema (grazie prot)
+#+begin_src emacs-lisp
+  (defun org-like-em-big ()
+    (interactive)
+    (set-face-attribute 'org-level-1 nil :height 2.00)
+    (set-face-attribute 'org-level-2 nil :height 1.75)
+    (set-face-attribute 'org-level-3 nil :height 1.50)
+    (set-face-attribute 'org-level-4 nil :height 1.25))
+
+  (org-like-em-big)
+#+end_src
+** Finestra
+emacs non ha un widget che non sembri uscito da windows xp, niente che valga la pena di sprecare preziose righe di pixel
+per evitare client side rendering, che con emacs fa cagare, vi è
+#+begin_src emacs-lisp
+(add-to-list 'default-frame-alist '(undecorated . t))
+#+end_src
+altre variabili contro l'utilizzo di gui sono ritrovabili [[better][di sotto]]
+** Colori
+intanto si settano gli altri temi, questi presi dai repo come una persona normale
+#+begin_src emacs-lisp
+  (use-package color-theme-sanityinc-tomorrow
+    :ensure t)
+
+  (use-package doom-themes
+    :ensure t
+    :config
+    (setq doom-themes-enable-bold t
+          doom-zenburn-brighter-comments t
+          doomt-themes-enable-italic t))
+ #+end_src
+
+e questi presi di violenza da github et al
+#+begin_src emacs-lisp
+  (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/everforest-theme")
+  (add-to-list 'custom-theme-load-path "~/.emacs.d/themes/rose-pine-emacs")
+  (add-to-list 'custom-theme-load-path "~/.emacs.d/themes")
+#+end_src
+
+e ora, settate tutte le possibili variabili del caso,
+#+begin_src emacs-lisp
+  (going-dark)
+#+end_src
+
+* Binding
+** Evil leader
+<<leader>>
+#+begin_src emacs-lisp
+  (evil-set-leader 'normal (kbd "SPC"))
+  (evil-set-leader 'insert (kbd "M-SPC"))
+#+end_src
+** Per gusto personale
+*** Navigazione finestre
+#+begin_src emacs-lisp
+  (global-set-key "\M-w" 'shell-command)
+  (global-set-key "\M-W" 'async-shell-command)
+  (evil-define-key 'normal 'global (kbd "<leader>w") 'shell-command)
+  (evil-define-key 'normal 'global (kbd "<leader>W") 'async-shell-command)
+
+  (global-set-key "\M-a" (lambda () (interactive) (other-window 1)))
+  (global-set-key "\M-A" (lambda () (interactive) (other-window -1)))
+  (evil-define-key 'normal 'global (kbd "<leader>a")
+    (lambda () (interactive) (other-window 1)))
+#+end_src
+** Per cose di package
+*** Neotree
+**** Toggle
+***** L'aborto
+il toggle è stato un po' un parto da settare perchè sulla vecchia config ce l'avevo settato a =M-q=, ma poi =M-q= è in ogni minor mode a volre dire "indent region"
+quindi qui ho un po' bestemmiato, e questo codice è un po' una bestemmia
+#+begin_src emacs-lisp
+  (with-eval-after-load 'c-mode
+    (define-key c-mode-map (kbd "M-q") 'neotree-toggle))
+  (with-eval-after-load 'c++-mode
+    (define-key c++-mode-map (kbd "M-q") 'neotree-toggle))
+  (with-eval-after-load 'java-mode
+    (define-key java-mode-map (kbd "M-q") 'neotree-toggle))
+  (with-eval-after-load 'python-mode
+    (define-key python-mode-map (kbd "M-q") 'neotree-toggle))
+
+  (with-eval-after-load 'lisp-mode
+    (define-key lisp-mode-map (kbd "M-q") 'neotree-toggle))
+  (with-eval-after-load 'scheme-mode
+    (define-key scheme-mode-map (kbd "M-q") 'neotree-toggle))
+  (with-eval-after-load 'emacs-lisp-mode
+    (define-key emacs-lisp-mode-map (kbd "M-q") 'neotree-toggle))
+  (with-eval-after-load 'typescript-mode
+    (define-key typescript-mode-map (kbd "M-q") 'neotree-toggle))
+#+end_src
+***** E intanto
+visto che il meccanismo di sopra è /molto/ volatile come funzionamento, mi tengo questo come fallback finchè non capisco come fare meglio i binding con priorità
+(vale a dire finchè non mi metto a fare una minor mode mia che definisce sti binding e che viene rimessa in cima alla lista delle minor mode ogni cazzo di volta che ne carica una)
+#+begin_src emacs-lisp
+  (global-set-key "\C-q" 'neotree-toggle)
+  (evil-define-key 'normal 'global (kbd "<leader>q") 'neotree-toggle)
+#+end_src
+**** Gestione albero
+molto di vim
+copie e incolli dalla wiki
+#+begin_src emacs-lisp
+  (evil-define-key 'normal neotree-mode-map (kbd "j") 'neotree-next-line)
+  (evil-define-key 'normal neotree-mode-map (kbd "k") 'neotree-previous-line)
+  (evil-define-key 'normal neotree-mode-map (kbd "n") 'neotree-create-node)
+  (evil-define-key 'normal neotree-mode-map (kbd "d") 'neotree-delete-node)
+
+  (evil-define-key 'normal neotree-mode-map (kbd "r") 'neotree-rename-node)
+  (evil-define-key 'normal neotree-mode-map (kbd "c") 'neotree-copy-node)
+  (evil-define-key 'normal neotree-mode-map (kbd "RET") 'neotree-enter)
+  (evil-define-key 'normal neotree-mode-map (kbd "TAB") 'neotree-enter)
+  (evil-define-key 'normal neotree-mode-map (kbd "SPC") 'neotree-quick-look)
+  (evil-define-key 'normal neotree-mode-map (kbd "h") 'neotree-hidden-file-toggle)
+  (evil-define-key 'normal neotree-mode-map (kbd "g") 'neotree-refresh)
+  (evil-define-key 'normal neotree-mode-map (kbd "q") 'neotree-hide)
+#+end_src
+
+*** Altri
+**** Ibuffer
+#+begin_src emacs-lisp
+  (global-set-key "\C-x\C-b" 'ibuffer)
+#+end_src
+**** Evil
+vedere intanto [[leader]] per le key leader
+visto che sono un po' troppo abituato a dove si trovano i =:= americani per il prompt di vim, e che la tastiera italiana li mette da tutt'altra parte
+#+begin_src emacs-lisp
+  (evil-define-key 'normal 'global "ç" 'evil-ex)
+#+end_src
+** Per funzioni custom
+*** Buffer
+#+begin_src emacs-lisp
+  (global-set-key (kbd "C-c C-x C-k") 'kill-hide)
+#+end_src
+*** Yasnippet
+#+begin_src emacs-lisp
+  (global-set-key (kbd "C-c m")
+		  (lambda (s)
+		    (interactive "sShorthand: ")
+		    (yas-expand-snippet (create-snippet-from-shorthand s))))
+#+end_src
+
+* Variabili globali rifatte
+** Preferenze personali
+*** Generali
+**** Quelle mie
+#+begin_src emacs-lisp
+  (setq make-backup-files nil)
+  (setq auto-save-default nil)
+  (setq ring-bell-function 'ignore)
+
+  (setq tab-width 4)
+  (setq scroll-conservatively most-positive-fixnum)
+  (show-paren-mode t)
+  (put 'upcase-region 'disabled nil)
+  (put 'downcase-region 'disabled nil)
+#+end_src
+**** Quelle fottute da better defaults
+<<better>>
+#+begin_src emacs-lisp
+  (menu-bar-mode -1)
+  (when (fboundp 'tool-bar-mode)
+    (tool-bar-mode -1))
+  (when (fboundp 'scroll-bar-mode)
+    (scroll-bar-mode -1))
+  (when (fboundp 'horizontal-scroll-bar-mode)
+    (horizontal-scroll-bar-mode -1))
+#+end_src
+*** Per programmazione in particolare
+#+begin_src emacs-lisp
+  (setq c-basic-offset 4)
+  (setq python-indent-offset 4)
+#+end_src
+** Per l'LSP
+<<lspvars>>
+è purtroppo richiesto il settare una qualità ingente di merda, incluse variabili di sistema, ai fini di far funzionare decentemente il language server protocol su emacs (cazzo uno di sti giorni prendo astronvim e non mi rivedete)
+#+begin_src emacs-lisp
+  (setq read-process-output-max (* 1024 1024)
+	gc-cons-threshold 102400000
+	gc-cons-threshold 102400000)
+#+end_src
+
+inoltre, ai fini di non avere due formatter diversi in concorrenza
+#+begin_src emacs-lisp
+  (setq lsp-enable-indentation nil)
+#+end_src
+
+* Mode
+** Minor mode globali
+*** "globali" per programmazione
+per quanto le mode in questione non abbiamo una modalità "globale" è comunque possibile usarle con =prog-mode-hook= per renderle globali nel contesto della programmazione
+#+begin_src emacs-lisp
+    (add-hook 'prog-mode-hook 'rainbow-delimiters-mode) ; boh
+    (add-hook 'prog-mode-hook 'hs-minor-mode) ; potrebbe far partire tutto, occhio
+#+end_src
+** Minor mode custom
+(quando rifaccio una keybind priority map la metto qui)

@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: djangovar
+# key: dv
+# --
+\{\{ ${1:var} \}\}$0

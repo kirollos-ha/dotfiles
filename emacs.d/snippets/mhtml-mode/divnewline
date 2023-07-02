@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: divnewline
+# key: do
+# --
+<div$1>$0
+</div>

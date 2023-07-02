@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: djangotag
+# key: dj
+# --
+\{% ${1:tag} $0%\}
+\{% end$1 %\}

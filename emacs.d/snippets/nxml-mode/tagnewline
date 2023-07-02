@@ -1,0 +1,6 @@
+# -*- mode: snippet -*-
+# name: tagnewline
+# key: to
+# --
+<${1:tag}>$0
+</$1>

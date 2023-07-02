@@ -50,6 +50,8 @@ math.randomseed(os.time())
 -- {{{ Variable definitions
 -- Themes define colours, icons, font and wallpapers.
 beautiful.init(gears.filesystem.get_themes_dir() .. "default/theme.lua")
+beautiful.useless_gap = 4
+beautiful.border_width = 2
 
 -- This is used later as the default terminal and editor to run.
 terminal = "st -e zsh"
@@ -175,8 +177,8 @@ local function set_random_wallpaper(s)
 end
 
 local function set_wallpaper(s)
-    local one_true_wallpaper = "/home/big/Pictures/Sfondi/ignucius.jpg"
-    gears.wallpaper.maximized(one_true_wallpaper, s)
+    local some_wallpaper = "/home/big/Pictures/Sfondi/Nord/wave-dark-nord.png"
+    gears.wallpaper.maximized(some_wallpaper, s)
 end
 
 -- Re-set wallpaper when a screen's geometry changes (e.g. different resolution)
@@ -328,9 +330,11 @@ globalkeys = gears.table.join(
               {description = "restore minimized", group = "client"}),
 
     -- Prompt
-    awful.key({ "Mod1" },            "d",     function () awful.screen.focused().mypromptbox:run() end,
+    awful.key({ "Mod4" },            "p",     function () awful.screen.focused().mypromptbox:run() end,
               {description = "run prompt", group = "launcher"}),
-    awful.key({ "Mod1", "Shift" },            "d",     function () awful.spawn("promptu") end,
+    awful.key({ "Mod4", },           "o",     function () awful.spawn("promptu")                   end,
+              {description = "promptu", group = "launcher"}),
+    awful.key({ "Mod4", },           "i",     function () awful.spawn("rofi -show combi drun")     end,
               {description = "promptu", group = "launcher"}),
 
     awful.key({ modkey }, "x",
@@ -344,9 +348,12 @@ globalkeys = gears.table.join(
               end,
               {description = "lua execute prompt", group = "awesome"}),
     -- Menubar
-    awful.key({ modkey }, "p", function() menubar.show() end,
+    awful.key({ modkey }, "a", function() menubar.show() end,
               {description = "show the menubar", group = "launcher"}),
-    -- User defined launchers
+    -- User defined
+    awful.key({ "Mod4" }, "b", function() local w = awful.screen.focused().mywibox w.visible = not w.visible  end,
+              {description = "toggle topbar", group = "layout"}),
+    -- launchers
     -- C-M-x butterfly
     awful.key({ "Mod1", "Control" }, "x", function() awful.spawn("stallman") end,
               {description = "(the one (and 'only 'emacs))", group = "launcher"}),
@@ -386,7 +393,7 @@ clientkeys = gears.table.join(
               {description = "toggle floating", group = "client"}),
     awful.key({ modkey, "Control" }, "Return", function (c) c:swap(awful.client.getmaster()) end,
               {description = "move to master", group = "client"}),
-    awful.key({ modkey,           }, "o",      function (c) c:move_to_screen()               end,
+    awful.key({ modkey,           }, "i",      function (c) c:move_to_screen()               end,
               {description = "move to screen", group = "client"}),
     awful.key({ modkey,           }, "t",      function (c) c.ontop = not c.ontop            end,
               {description = "toggle keep on top", group = "client"}),
@@ -417,36 +424,67 @@ clientkeys = gears.table.join(
         {description = "(un)maximize horizontally", group = "client"})
 )
 
+function muh_tag_key(i)
+	-- given the pressed key, determine the tag it will send to
+	-- I only have a left meta key, and use low-ish tag numbers,
+	-- so I'd like the tag order will be reverse to that of the keys
+	-- since the 0 key is after the 9 key, a simple 9-i won't work, so
+	muh_tag_key_arr = {
+	1, -- 0 sends here (o almeno lo farebbe se sta cosa funzionasse)
+	1, -- 1 
+	2, -- 2 
+	3, -- 3 
+	4, -- 4 
+	5, -- 5 
+	5, -- 6 sends here
+	4, -- 7 sends here
+	3, -- 8 sends here
+	2, -- 9 sends here
+	}
+	return muh_tag_key_arr[i+1] -- graze lua, l'indice a 0 non serviva, noooooo
+end
+
+function muh_tagnum_string(i)
+	-- "#9" does not work to specify 0 key as a binding, but "0" does
+	-- at least it does on my machine (possibly sorry, future me)
+	-- this function helps define a unified interface to access tag numbers
+	-- while allowing the 0 key, and avoiding any ad hoc abomination
+	if i == 0 then
+		return "0"
+	end
+	return "#" .. i+9
+end
+
 -- Bind all key numbers to tags.
 -- Be careful: we use keycodes to make it work on any keyboard layout.
 -- This should map on the top row of your keyboard, usually 1 to 9.
-for i = 1, 9 do
+for i = 0, 9 do
     globalkeys = gears.table.join(globalkeys,
         -- View tag only.
-        awful.key({ modkey }, "#" .. i + 9,
+        awful.key({ modkey }, muh_tagnum_string(i),
                   function ()
                         local screen = awful.screen.focused()
-                        local tag = screen.tags[i]
+                        local tag = screen.tags[muh_tag_key(i)]
                         if tag then
                            tag:view_only()
                         end
                   end,
                   {description = "view tag #"..i, group = "tag"}),
         -- Toggle tag display.
-        awful.key({ modkey, "Control" }, "#" .. i + 9,
+        awful.key({ modkey, "Control" }, muh_tagnum_string(i),
                   function ()
                       local screen = awful.screen.focused()
-                      local tag = screen.tags[i]
+                      local tag = screen.tags[muh_tag_key(i)]
                       if tag then
                          awful.tag.viewtoggle(tag)
                       end
                   end,
                   {description = "toggle tag #" .. i, group = "tag"}),
         -- Move client to tag.
-        awful.key({ modkey, "Shift" }, "#" .. i + 9,
+        awful.key({ modkey, "Shift" }, muh_tagnum_string(i),
                   function ()
                       if client.focus then
-                          local tag = client.focus.screen.tags[i]
+                          local tag = client.focus.screen.tags[muh_tag_key(i)]
                           if tag then
                               client.focus:move_to_tag(tag)
                           end
@@ -454,10 +492,10 @@ for i = 1, 9 do
                   end,
                   {description = "move focused client to tag #"..i, group = "tag"}),
         -- Toggle tag on focused client.
-        awful.key({ modkey, "Control", "Shift" }, "#" .. i + 9,
+        awful.key({ modkey, "Control", "Shift" }, muh_tagnum_string(i),
                   function ()
                       if client.focus then
-                          local tag = client.focus.screen.tags[i]
+                          local tag = client.focus.screen.tags[muh_tag_key(i)]
                           if tag then
                               client.focus:toggle_tag(tag)
                           end

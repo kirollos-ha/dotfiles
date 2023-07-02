@@ -1,9 +1,10 @@
 (in-package :stumpwm)
-(run-shell-command "setxkbmap -layout us,it -option grp:win_space_toggle")
-(run-shell-command "stallman")
-(run-shell-command "feh --bg-center ~/Pictures/wallpapers/meta.jpg")
-(define-key *root-map* (kbd "e") "exec emacsclient --create-frame ~")
+(run-shell-command "feh --bg-center ~/Pictures/Sfondi/Berserk/sed-boh-armour.jpg")
+
+(define-key *root-map* (kbd "e") "exec stallman")
 (setf *ignore-wm-inc-hints* t)
+
+(setf *mouse-focus-policy* :click)
 
 ;; some keymaps and how to reach them
 ;; terminal
@@ -21,6 +22,10 @@
 	(define-key m (kbd "e") "eval")
 	m))
 (define-key *root-map* (kbd "l") '*muh-launchers-keymap*)
+;; C- doesn't seem to work too well with the italian layouts
+;; so I'll keep these as backup
+(define-key *top-map* (kbd "s-p") "exec dmenu_run") ;exec does NOT work with italian
+(define-key *top-map* (kbd "s-o") "exec promptu")
 
 (defvar *muh-screenshot-keymap*
   (let ((m (make-sparse-keymap)))
@@ -29,36 +34,53 @@
   m))
 (define-key *root-map* (kbd "s") '*muh-screenshot-keymap*)
 
-(gnew "EMACS")
+(grename "EMACS")
 (gnewbg "WEB")
 (gnewbg "DOCS")
 (gnewbg "FILE")
-(gnewbg "DISEGNINI")
+(gnewbg "ARTIS-GRATIA")
 
 ;; vi vi vi, the editor of the beast
 (define-interactive-keymap move-vi
-						   nil
-						   ((kbd "h") "move-focus left")
-						   ((kbd "j") "move-focus down")
-						   ((kbd "k") "move-focus up")
-						   ((kbd "l") "move-focus right"))
+  nil
+  ((kbd "h") "move-focus left")
+  ((kbd "j") "move-focus down")
+  ((kbd "k") "move-focus up")
+  ((kbd "l") "move-focus right"))
 (define-key *top-map* (kbd "M-j") "move-vi")
 
+(define-interactive-keymap pull-vi
+  nil
+  ((kbd "j") "pull-hidden-next")
+  ((kbd "k") "pull-hidden-previous"))
+(define-key *top-map* (kbd "M-k") "pull-vi")
+
 (define-interactive-keymap workspaces
-						   nil
-						   ((kbd "1") "gselect EMACS")
-						   ((kbd "2") "gselect WEB")
-						   ((kbd "3") "gselect DOCS")
-						   ((kbd "4") "gselect FILE")
-						   ((kbd "5") "gselect DISEGNINI")
-						   ((kbd "h") "gnext")
-						   ((kbd "l") "gprev"))
+  nil
+  ((kbd "s") "grouplist")
+  ((kbd "e") "gselect EMACS")
+  ((kbd "w") "gselect WEB")
+  ((kbd "d") "gselect DOCS")
+  ((kbd "f") "gselect FILE")
+  ((kbd "a") "gselect ARTIS-GRATIA")
+  ((kbd "h") "gprev")
+  ((kbd "l") "gnext")
+
+  ((kbd "C-e") "gmove EMACS")
+  ((kbd "C-w") "gmove WEB")
+  ((kbd "C-d") "gmove DOCS")
+  ((kbd "C-f") "gmove FILE")
+  ((kbd "C-a") "gmove ARTIS-GRATIA")
+  ((kbd "C-l") "gnext-with-window")
+  ((kbd "C-h") "gprev-with-window"))
+
 (define-key *top-map* (kbd "M-l") "workspaces")
+(define-key *root-map* (kbd "w") "workspaces")
 
 ;; this has to mimic emacs
 ;; EVEN FURTHER BEYOND!!
 (define-key *root-map* (kbd "0") "remove")
-(define-key *root-map* (kbd "1") "remove-split")
+(define-key *root-map* (kbd "1") "fullscreen")
 (define-key *root-map* (kbd "2") "vsplit")
 (define-key *root-map* (kbd "3") "hsplit")
 
@@ -74,7 +96,6 @@
 ;;; slynk
 ;;; I don't know how to lazy load, uncomment and reeval (loadrc) when fucking around live
 
-#|
 (ql:quickload :slynk)
 (let ((slynk-port 4005))
   (defcommand slynk () ()
@@ -86,46 +107,43 @@
 				  "started slynk server, run M-x sly-connect and then (in-package :stumpwm) inside the sly repl"))
 			   :name "slynk-manual")))
 (define-key *root-map* (kbd "C-s") "slynk")
-|#
 
-;; qua va modularizzato qualcosina
-(defvar phundrak-nord0 "#2e3440")
-(defvar phundrak-nord1 "#3b4252")
-(defvar phundrak-nord2 "#434c5e")
-(defvar phundrak-nord3 "#4c566a")
-(defvar phundrak-nord4 "#d8dee9")
-(defvar phundrak-nord5 "#e5e9f0")
-(defvar phundrak-nord6 "#eceff4")
-(defvar phundrak-nord7 "#8fbcbb")
-(defvar phundrak-nord8 "#88c0d0")
-(defvar phundrak-nord9 "#81a1c1")
-(defvar phundrak-nord10 "#5e81ac")
-(defvar phundrak-nord11 "#bf616a")
-(defvar phundrak-nord12 "#d08770")
-(defvar phundrak-nord13 "#ebcb8b")
-(defvar phundrak-nord14 "#a3be8c")
-(defvar phundrak-nord15 "#b48ead")
+(let ((black "#000000")
+      (dark-gary "#777777")
+      (light-gary "#999999")
+      (dark-blue "#112233")
+      (white "#ffffff"))
+  (setf *mode-line-background-color* dark-blue
+	*mode-line-foreground-color* white
+	*mode-line-border-color* black
+	*mode-line-border-width* 0)
+  (set-border-color dark-gary)
+  (set-focus-color light-gary)
+  (set-unfocus-color dark-gary)
+  (set-float-focus-color light-gary)
+  (set-float-unfocus-color dark-gary))
 
-;; vedi come spiccicare la cosa malamente addosso a temi colori fottuti da terminali
-;; e poi fotti malamente colori da terminali
-;; tipo i dotfile di alacritty di ghostz(qualcosa)
-(setq *colors*
-      `(,phundrak-nord1   ;; 0 black
-        ,phundrak-nord11  ;; 1 red
-        ,phundrak-nord14  ;; 2 green
-        ,phundrak-nord13  ;; 3 yellow
-        ,phundrak-nord10  ;; 4 blue
-        ,phundrak-nord14  ;; 5 magenta
-        ,phundrak-nord8   ;; 6 cyan
-        ,phundrak-nord5)) ;; 7 white
+(let ((universal-width 2))
+  (setf *normal-border-width* universal-width
+	*float-window-border* universal-width))
+
+;; https://github.com/stumpwm/stumpwm/wiki/Modules
+(load-module "swm-gaps")
+;; https://config.phundrak.com/stumpwm.html
+(setf swm-gaps:*head-gaps-size* 0
+      swm-gaps:*inner-gaps-size* 4
+      swm-gaps:*outer-gaps-size* 4)
+
+(defun see-changed-colors ()
+  (mode-line)
+  (mode-line)
+  (update-color-map (current-screen)))
+(defun see-changed-gaps ()
+  (swm-gaps:toggle-gaps)
+  (swm-gaps:toggle-gaps))
 
 (when *initializing*
-  (update-color-map (current-screen)))
-
-(setf *mode-line-background-color* phundrak-nord1
-	  *mode-line-foreground-color* phundrak-nord5)
-
-(setf *mode-line-border-color* phundrak-nord1
-	  *mode-line-border-width* 0)
+  (update-color-map (current-screen))
+  (swm-gaps:toggle-gaps))
 
 (mode-line)

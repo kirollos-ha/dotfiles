@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: bigmathmode
+# key: MM
+# --
+\\[ $1 \]$0

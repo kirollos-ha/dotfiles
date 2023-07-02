@@ -5,15 +5,20 @@ super + Return
 
 # best editor C-M-x butterfly
 ctrl + alt + x
-	emacs ~
+	stallman
+
+# program launcher
+super + p
+	dmenu_run
 
 # other program launcher
-alt + d
-	rofi -combi-modi window,drun,ssh,combi \
-        -theme purple \
-        -font "hack 10" \
-        -show combi \
-        -icon-theme "Breeze Dark" -show-icons
+super + o
+	promptu
+
+# other other program launcher
+super + i
+	rofi -show combi drun
+
 
 # make sxhkd reload its configuration files:
 super + Escape
@@ -30,13 +35,13 @@ super + {_,shift + }w
 	bspc node -{c,k}
 
 # just kill
-alt + shift + q
+ctrl + shift + q
 	bspc node -k
 
 # toggle bar
 super + shift + b
 	{polybar-msg cmd hide ; bspc config top_padding +0, \
-	 polybar-msg cmd show ; bspc config top_padding 38 }
+	 polybar-msg cmd show ; bspc config top_padding 30 }
 
 # show dock (shitty hack that because)
 super + p
@@ -45,9 +50,16 @@ super + p
 # alternate between the tiled and monocle layout
 # and hide bar if necessairy
 super + m
-	{bspc desktop -l monocle ; $HOME/.config/bspwm/scripts/HideBar -h, \
-	 bspc desktop -l tiled   ; $HOME/.config/bspwm/scripts/HideBar -u }
+	{bspc config top_padding +0; bspc desktop -l monocle; polybar-msg cmd hide, \
+	 bspc desktop -l tiled }
 
+# hide focused node
+super + n
+    bspc node focused --flag hidden on
+
+# unhide a hidden node
+super + ctrl + n
+    bspc node any.hidden --flag hidden=off
 
 # send the newest marked node to the newest preselected node
 super + y
@@ -83,11 +95,11 @@ super + {_,shift + }c
 
 # focus the next/previous desktop in the current monitor
 # meesa got no clue
-super + {9,0}
+super + {bracketleft,bracketright}
 	bspc desktop -f {prev,next}.local
 
 # move the focused window to the next/previous desktop
-super + shift + {9,0}
+super + shift + {bracketleft,bracketright}
 	bspc node --to-desktop {prev,next}.local
 
 # focus the last node/desktop
